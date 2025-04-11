@@ -1,0 +1,8 @@
+[
+{
+  "directory": "/Users/ellie/Documents/RPI/classes/parallel/parallel-radiosity/solver/build",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -isystem /opt/homebrew/Cellar/open-mpi/5.0.7/include -std=gnu++11 -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.4.sdk -mmacosx-version-min=15.3 -g -Wall -Wextra -o CMakeFiles/radiosity.dir/main.cpp.o -c /Users/ellie/Documents/RPI/classes/parallel/parallel-radiosity/solver/src/main.cpp",
+  "file": "/Users/ellie/Documents/RPI/classes/parallel/parallel-radiosity/solver/src/main.cpp",
+  "output": "CMakeFiles/radiosity.dir/main.cpp.o"
+}
+]
