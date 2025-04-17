@@ -2,7 +2,6 @@
 #include <cstdlib>
 #include "argparser.h"
 #include "boundingbox.h"
-#include "camera.h"
 #include "face.h"
 #include "material.h"
 #include "mesh.h"
@@ -101,14 +100,14 @@ Vec3f RayTracer::TraceRay(Ray& ray, Hit& hit, int bounce_count) const {
     // ===========================================
     // ASSIGNMENT:  ADD SHADOW & SOFT SHADOW LOGIC
     // ===========================================
-    double shadowProportion = 0.0;
+    double    shadowProportion = 0.0;
     const int shadowSamples = GLOBAL_args->mesh_data->num_shadow_samples;
     for (int i = 0; i < shadowSamples; i++) {
 
       const Vec3f lightPoint =
           shadowSamples == 1 ? f->computeCentroid() : f->RandomPoint();
       const Vec3f direction = lightPoint - point;
-      Vec3f directionNorm = direction;
+      Vec3f       directionNorm = direction;
       directionNorm.Normalize();
       const Ray toLight = Ray(point, directionNorm);
 
@@ -145,8 +144,8 @@ Vec3f RayTracer::TraceRay(Ray& ray, Hit& hit, int bounce_count) const {
   Vec3f reflectedDirection =
       ray.getDirection() -
       2 * (ray.getDirection().Dot3(hit.getNormal())) * hit.getNormal();
-  Ray recursiveRay = Ray(point, reflectedDirection);
-  Hit recursiveHit;
+  Ray   recursiveRay = Ray(point, reflectedDirection);
+  Hit   recursiveHit;
   Vec3f recursiveResult =
       TraceRay(recursiveRay, recursiveHit, bounce_count - 1);
   RayTree::AddReflectedSegment(recursiveRay, 0, recursiveHit.getT());
@@ -186,12 +185,7 @@ Vec3f VisualizeTraceRay(double i, double j) {
       y = (j - GLOBAL_args->mesh_data->height / 2.0 + yOffset) / double(max_d) +
           0.5;
     }
-    Ray r = GLOBAL_args->mesh->camera->generateRay(x, y);
     Hit hit;
-    color += GLOBAL_args->raytracer->TraceRay(
-        r, hit, GLOBAL_args->mesh_data->num_bounces);
-    // add that ray for visualization
-    RayTree::AddMainSegment(r, 0, hit.getT());
   }
   color /= rayCount;
 
@@ -202,16 +196,7 @@ Vec3f VisualizeTraceRay(double i, double j) {
 // for visualization: find the "corners" of a pixel on an image plane
 // 1/2 way between the camera & point of interest
 Vec3f PixelGetPos(double i, double j) {
-  int max_d =
-      mymax(GLOBAL_args->mesh_data->width, GLOBAL_args->mesh_data->height);
-  double x = (i - GLOBAL_args->mesh_data->width / 2.0) / double(max_d) + 0.5;
-  double y = (j - GLOBAL_args->mesh_data->height / 2.0) / double(max_d) + 0.5;
-  Camera* camera = GLOBAL_args->mesh->camera;
-  Ray r = camera->generateRay(x, y);
-  Vec3f cp = camera->camera_position;
-  Vec3f poi = camera->point_of_interest;
-  float distance = (cp - poi).Length() / 2.0f;
-  return r.getOrigin() + distance * r.getDirection();
+  return Vec3f();
 }
 
 // Scan through the image from the lower left corner across each row
@@ -311,11 +296,11 @@ int RayTracer::triCount() {
 void RayTracer::packMesh(float*& current) {
   for (unsigned int i = 0; i < pixels_a.size(); i++) {
     Pixel& p = pixels_a[i];
-    Vec3f v1 = p.v1;
-    Vec3f v2 = p.v2;
-    Vec3f v3 = p.v3;
-    Vec3f v4 = p.v4;
-    Vec3f normal = ComputeNormal(v1, v2, v3) + ComputeNormal(v1, v3, v4);
+    Vec3f  v1 = p.v1;
+    Vec3f  v2 = p.v2;
+    Vec3f  v3 = p.v3;
+    Vec3f  v4 = p.v4;
+    Vec3f  normal = ComputeNormal(v1, v2, v3) + ComputeNormal(v1, v3, v4);
     normal.Normalize();
     if (render_to_a) {
       v1 += 0.02 * normal;
@@ -329,11 +314,11 @@ void RayTracer::packMesh(float*& current) {
 
   for (unsigned int i = 0; i < pixels_b.size(); i++) {
     Pixel& p = pixels_b[i];
-    Vec3f v1 = p.v1;
-    Vec3f v2 = p.v2;
-    Vec3f v3 = p.v3;
-    Vec3f v4 = p.v4;
-    Vec3f normal = ComputeNormal(v1, v2, v3) + ComputeNormal(v1, v3, v4);
+    Vec3f  v1 = p.v1;
+    Vec3f  v2 = p.v2;
+    Vec3f  v3 = p.v3;
+    Vec3f  v4 = p.v4;
+    Vec3f  normal = ComputeNormal(v1, v2, v3) + ComputeNormal(v1, v3, v4);
     normal.Normalize();
     if (!render_to_a) {
       v1 += 0.02 * normal;

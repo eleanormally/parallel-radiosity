@@ -1,33 +1,79 @@
 #include <mpi.h>
 #include <cassert>
-#include <fstream>
+#include "fp.h"
+#include "mesh/argparser.h"
+#include "mesh/face.h"
+#include "mesh/mesh.h"
+#include "mesh/meshdata.h"
 #include "mesh/vectors.h"
 
-int main(int argc, char* argv[]) {
-  assert(argc >= 2);
-  std::ifstream file;
-  file.open(argv[1]);
-  std::string line;
+#define sample_points 1024
+using namespace std;
 
-  int dimension;
-  file >> dimension;
-  std::vector<std::vector<double>> formFactors(
-      dimension, std::vector<double>(dimension, 0.0));
-  std::vector<Vec3f> emmitence(dimension);
-  std::vector<Vec3f> reflectance(dimension);
-  for (int i = 0; i < dimension; i++) {
-    for (int j = 0; j < dimension; j++) {
-      file >> formFactors[i][j];
+f3 vecToF3(const Vec3f& v) {
+  f3 out;
+  out.data[0] = v.x();
+  out.data[1] = v.y();
+  out.data[2] = v.z();
+  return out;
+}
+
+double* computeFormFactors(int i, Mesh* m, int rank) {
+  FP** lines = (FP**)calloc(m->numFaces(), sizeof(FP*));
+
+  Face* f = m->getFace(i);
+
+  for (int j = 0; j < m->numFaces(); j++) {
+    lines[j] = (FP*)calloc(sample_points, sizeof(FP));
+
+    Face* f2 = m->getFace(j);
+    f3 anorm = vecToF3(f->computeNormal());
+    f3 bnorm = vecToF3(f2->computeNormal());
+    for (int k = 0; k < sample_points; k++) {
+      f3 a = vecToF3(f->RandomPoint());
+      f3 b = vecToF3(f2->RandomPoint());
+      lines[j][k] = FP(a, anorm, b, bnorm);
     }
-    int x, y, z, r, g, b;
-    file >> x >> y >> z >> r >> g >> b;
-    emmitence[i] = Vec3f(x, y, z);
-    reflectance[i] = Vec3f(r, g, b);
   }
+  double* output = getFormFactor(lines, m->numFaces(), sample_points, rank);
+  for (int j = 0; j < m->numFaces(); j++) {
+    output[j] /= f->getArea();
+    free(lines[j]);
+  }
+  double flux = 0;
+  for(int j = 0; j < m->numFaces(); j++) {
+    flux += output[j];
+  }
+  for(int j = 0; j < m->numFaces(); j++) {
+    output[j] /= flux;
+  }
+  free(lines);
+  return output;
+}
+
+int main(int argc, const char* argv[]) {
   MPI_Init(nullptr, nullptr);
   int worldRank;
   int worldSize;
   MPI_Comm_rank(MPI_COMM_WORLD, &worldRank);
   MPI_Comm_size(MPI_COMM_WORLD, &worldSize);
   MPI_Barrier(MPI_COMM_WORLD);
+  MeshData  mesh{};
+  ArgParser args(argc, argv, &mesh);
+  Mesh*     m = args.mesh;
+
+  for (int i = 0; i < m->numFaces(); i++) {
+    if (i % worldSize == worldRank) {
+      double* out = computeFormFactors(i, m, worldRank);
+      printf("%d: ", i);
+      for (int j = 0; j < m->numFaces(); j++) {
+        printf("%lf, ", out[j]);
+      }
+      printf("\n");
+      free(out);
+    }
+  }
+  MPI_Barrier(MPI_COMM_WORLD);
+
+  MPI_Finalize();
 }

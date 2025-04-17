@@ -6,7 +6,6 @@
 
 #include "argparser.h"
 #include "boundingbox.h"
-#include "camera.h"
 #include "cylinder_ring.h"
 #include "edge.h"
 #include "face.h"
@@ -183,7 +182,10 @@ void Mesh::setParentsChild(Vertex* p1, Vertex* p2, Vertex* child) {
 // the load function parses our (non-standard) extension of very simple .obj files
 // ===============================================================================
 
-void Mesh::Load(std::string file) {
+void Mesh::Load(ArgParser* _args) {
+  args = _args;
+
+  std::string file = args->path + '/' + args->input_file;
 
   std::ifstream objfile(file.c_str());
   if (!objfile.good()) {
@@ -234,12 +236,6 @@ void Mesh::Load(std::string file) {
       float r, g, b;
       objfile >> r >> g >> b;
       background_color = Vec3f(r, g, b);
-    } else if (token == "PerspectiveCamera") {
-      camera = new PerspectiveCamera();
-      objfile >> *(PerspectiveCamera*)camera;
-    } else if (token == "OrthographicCamera") {
-      camera = new OrthographicCamera();
-      objfile >> *(OrthographicCamera*)camera;
     } else if (token == "m") {
       // this is not standard .obj format!!
       // materials
@@ -257,7 +253,10 @@ void Mesh::Load(std::string file) {
         objfile >> r >> g >> b;
         diffuse = Vec3f(r, g, b);
       } else {
-        throw std::runtime_error("no textures supported");
+        assert(token == "texture_file");
+        objfile >> texture_file;
+        // prepend the directory name
+        texture_file = args->path + '/' + texture_file;
       }
       Vec3f reflective, emitted;
       objfile >> token >> r >> g >> b;
@@ -281,19 +280,6 @@ void Mesh::Load(std::string file) {
   }
   std::cout << " mesh loaded: " << numFaces() << " faces and " << numEdges()
             << " edges." << std::endl;
-
-  if (camera == NULL) {
-    std::cout << "NO CAMERA PROVIDED, CREATING DEFAULT CAMERA" << std::endl;
-    // if not initialized, position a perspective camera and scale it so it fits in the window
-    assert(bbox != NULL);
-    Vec3f point_of_interest;
-    bbox->getCenter(point_of_interest);
-    float max_dim = bbox->maxDim();
-    Vec3f camera_position = point_of_interest + Vec3f(0, 0, 4 * max_dim);
-    Vec3f up = Vec3f(0, 1, 0);
-    camera = new PerspectiveCamera(camera_position, point_of_interest, up,
-                                   20 * M_PI / 180.0);
-  }
 }
 
 // =================================================================

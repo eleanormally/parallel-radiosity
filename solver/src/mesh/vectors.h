@@ -57,10 +57,10 @@ class Vec3f {
   double r() const { return data[0]; }
   double g() const { return data[1]; }
   double b() const { return data[2]; }
-  void setx(double x) { data[0] = x; }
-  void sety(double y) { data[1] = y; }
-  void setz(double z) { data[2] = z; }
-  void set(double d0, double d1, double d2) {
+  void   setx(double x) { data[0] = x; }
+  void   sety(double y) { data[1] = y; }
+  void   setz(double z) { data[2] = z; }
+  void   set(double d0, double d1, double d2) {
     data[0] = d0;
     data[1] = d1;
     data[2] = d2;
@@ -94,7 +94,7 @@ class Vec3f {
     data[1] *= d1;
     data[2] *= d2;
   }
-  void Negate() { Scale(-1.0); }
+  void   Negate() { Scale(-1.0); }
   double Dot3(const Vec3f& V) const {
     return data[0] * V.data[0] + data[1] * V.data[1] + data[2] * V.data[2];
   }
@@ -225,11 +225,11 @@ class Vec4f {
   double g() const { return data[1]; }
   double b() const { return data[2]; }
   double a() const { return data[3]; }
-  void setx(double x) { data[0] = x; }
-  void sety(double y) { data[1] = y; }
-  void setz(double z) { data[2] = z; }
-  void setw(double w) { data[3] = w; }
-  void set(double d0, double d1, double d2, double d3) {
+  void   setx(double x) { data[0] = x; }
+  void   sety(double y) { data[1] = y; }
+  void   setz(double z) { data[2] = z; }
+  void   setw(double w) { data[3] = w; }
+  void   set(double d0, double d1, double d2, double d3) {
     data[0] = d0;
     data[1] = d1;
     data[2] = d2;
@@ -268,7 +268,7 @@ class Vec4f {
     data[2] *= d2;
     data[3] *= d3;
   }
-  void Negate() { Scale(-1.0); }
+  void   Negate() { Scale(-1.0); }
   double Dot4(const Vec4f& V) const {
     return data[0] * V.data[0] + data[1] * V.data[1] + data[2] * V.data[2] +
            data[3] * V.data[3];

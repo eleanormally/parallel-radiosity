@@ -1,18 +1,16 @@
 #ifndef _MESH_DATA_H_
 #define _MESH_DATA_H_
 
+#include "../fp.h"
 // ====================================================================
 // ====================================================================
 
 // a homogeneous 3D point or a color with alpha
-typedef struct float3 {
-  float data[3];
-} float3;
 
 // a homogenous 3D point or a color with alpha
-typedef struct float4 {
+typedef struct f4 {
   float data[4];
-} float4;
+} f4;
 
 // a vertex with position, normal, and color
 typedef struct float12 {
@@ -59,14 +57,33 @@ typedef struct MeshData {
   int    num_shadow_samples;
   int    num_antialias_samples;
   int    num_glossy_samples;
-  float3 ambient_light;
+  f3 ambient_light;
   bool   intersect_backfacing;
   int    raytracing_divs_x;
   int    raytracing_divs_y;
   int    raytracing_x;
   int    raytracing_y;
 
+  // PHOTON MAPPING PARAMETERS
+  int  num_photons_to_shoot;
+  int  num_photons_to_collect;
+  bool render_photons;
+  bool render_photon_directions;
+  bool render_kdtree;
+  bool gather_indirect;
+
   bool bounding_box_frame;
+
+  int    meshTriCount;
+  float* meshTriData;
+  int    meshPointCount;
+  float* meshPointData;
+
+  int meshTriCount_allocated;
+  int meshPointCount_allocated;
+
+  float16 proj_mat;
+  float16 view_mat;
 
 } MeshData;
 

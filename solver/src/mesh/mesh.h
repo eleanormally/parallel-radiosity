@@ -35,7 +35,7 @@ class Mesh {
   // CONSTRUCTOR & DESTRUCTOR & LOAD
   Mesh() { bbox = NULL; }
   virtual ~Mesh();
-  void Load(std::string file);
+  void Load(ArgParser* _args);
 
   // ========
   // VERTICES
@@ -136,6 +136,7 @@ class Mesh {
 
   // ==============
   // REPRESENTATION
+  ArgParser* args;
 
  public:
   std::vector<Material*> materials;

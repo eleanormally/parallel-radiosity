@@ -5,6 +5,7 @@ class Mesh;
 class Ray;
 class Hit;
 class Material;
+class ArgParser;
 
 // ====================================================================
 // The base class for implicit object representations.  These objects
@@ -22,7 +23,7 @@ class Primitive {
   virtual bool intersect(const Ray& r, Hit& h) const = 0;
 
   // for OpenGL rendering & radiosity
-  virtual void addRasterizedFaces(Mesh* m) = 0;
+  virtual void addRasterizedFaces(Mesh* m, ArgParser* args) = 0;
 
  protected:
   // REPRESENTATION

@@ -5,7 +5,6 @@
 #include <random>
 
 #include "argparser.h"
-#include "camera.h"
 #include "matrix.h"
 #include "mesh.h"
 #include "meshdata.h"
@@ -77,22 +76,8 @@ bool DrawPixel() {
   return (bool)RayTraceDrawPixel();
 }
 
-void cameraTranslate(float x, float y) {
-  GLOBAL_args->mesh->camera->truckCamera(x, y);
-}
-void cameraRotate(float x, float y) {
-  GLOBAL_args->mesh->camera->rotateCamera(x, y);
-}
-void cameraZoom(float y) {
-  GLOBAL_args->mesh->camera->zoomCamera(y);
-}
-
 void TraceRay(float x, float y) {
   VisualizeTraceRay(x, y);
-}
-
-void placeCamera() {
-  GLOBAL_args->mesh->camera->glPlaceCamera();
 }
 }
 

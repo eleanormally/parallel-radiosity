@@ -7,7 +7,6 @@
 
 #include "argparser.h"
 #include "boundingbox.h"
-#include "camera.h"
 #include "mesh.h"
 #include "meshdata.h"
 #include "photon_mapping.h"
@@ -15,11 +14,7 @@
 #include "raytracer.h"
 #include "raytree.h"
 
-#if __APPLE__
 #include "matrix.h"
-#else
-#include <glm/gtc/type_ptr.hpp>
-#endif
 
 ArgParser* GLOBAL_args;
 
@@ -231,8 +226,6 @@ void ArgParser::separatePathAndFile(const std::string& input, std::string& path,
 
 void packMesh(MeshData* mesh_data, RayTracer* raytracer, Radiosity* radiosity,
               PhotonMapping* photonmapping) {
-
-  GLOBAL_args->mesh->camera->glPlaceCamera();
 
   // new desired counts
   int triCount = raytracer->triCount() + RayTree::triCount() +
