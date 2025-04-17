@@ -51,6 +51,7 @@ class ArgParser {
 
   std::string input_file;
   std::string path;
+  int         num_subdivisions;
 
   Mesh*          mesh;
   MeshData*      mesh_data;

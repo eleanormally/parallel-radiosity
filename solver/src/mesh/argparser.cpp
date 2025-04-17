@@ -83,6 +83,10 @@ ArgParser::ArgParser(int argc, const char* argv[], MeshData* _mesh_data) {
       i++;
       assert(i < argc);
       separatePathAndFile(argv[i], path, input_file);
+    } else if (std::string(argv[i]) == std::string("--subdiv")) {
+      i++;
+      assert(i < argc);
+      num_subdivisions = atoi(argv[i]);
     } else if (std::string(argv[i]) == std::string("--size")) {
       i++;
       assert(i < argc);
