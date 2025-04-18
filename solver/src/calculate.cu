@@ -36,12 +36,14 @@ void __global__ calculate(FP** lines, double* out) {
   double jCos = dot(p.bnorm, jToI) / len(jToI);
   lineFactor[threadIdx.x] = fabs(iCos*jCos)/ (len(iToJ)*len(jToI));
   __syncthreads();
-  if(threadIdx.x == 0) {
-    double sum = 0;
-    for(int i = 0; i < blockDim.x; i++) {
-      sum += lineFactor[i];
+  for(unsigned int s=blockDim.x/2; s > 0; s >>= 1) {
+    if(threadIdx.x < s) {
+      lineFactor[threadIdx.x] += lineFactor[threadIdx.x+s];
     }
-    out[blockIdx.x] = sum;
+    __syncthreads();
+  }
+  if(threadIdx.x == 0) {
+    out[blockIdx.x] = lineFactor[0];
   }
 }
 

@@ -1,5 +1,6 @@
 #include <mpi.h>
 #include <cassert>
+#include "clockcycle.h"
 #include "fp.h"
 #include "mesh/argparser.h"
 #include "mesh/face.h"
@@ -21,7 +22,6 @@ f3 vecToF3(const Vec3f& v) {
   out.data[2] = v.z();
   return out;
 }
-
 double* computeFormFactors(int i, ArgParser& args, int rank) {
   Mesh* m = args.mesh;
   FP**  lines = (FP**)calloc(m->numFaces(), sizeof(FP*));
@@ -78,6 +78,7 @@ double* computeFormFactors(int i, ArgParser& args, int rank) {
 }
 
 int main(int argc, const char* argv[]) {
+  MPI_File fh;
   MPI_Init(nullptr, nullptr);
   int worldRank;
   int worldSize;
@@ -91,18 +92,40 @@ int main(int argc, const char* argv[]) {
     m->Subdivision();
   }
 
+  uint64_t start = clock_now();
+
+  //creating output file
+  MPI_File_open(MPI_COMM_WORLD, "formfactors.out",
+                MPI_MODE_CREATE | MPI_MODE_WRONLY, MPI_INFO_NULL, &fh);
+
+  if (worldRank == 0) {
+    int faceCount = m->numFaces();
+    MPI_File_write_at(fh, 0, &faceCount, 1, MPI_INT, MPI_STATUS_IGNORE);
+  }
+  uint64_t totalWriteTime = 0;
+
   for (int i = 0; i < m->numFaces(); i++) {
     if (i % worldSize == worldRank) {
       double* out = computeFormFactors(i, args, worldRank);
-      printf("%d: ", i);
       for (int j = 0; j < m->numFaces(); j++) {
-        printf("%lf, ", out[j]);
+        int offset = sizeof(int) + ((i * m->numFaces() + j) * sizeof(double));
+        uint64_t write = clock_now();
+        MPI_File_write_at(fh, offset, &out[j], sizeof(double), MPI_DOUBLE,
+                          MPI_STATUS_IGNORE);
+        uint64_t endwrite = clock_now();
+        totalWriteTime += (endwrite - write);
       }
-      printf("\n");
       free(out);
     }
   }
   MPI_Barrier(MPI_COMM_WORLD);
 
+  MPI_File_close(&fh);
+  uint64_t endTime = clock_now();
+  if (worldRank == 0) {
+    printf("total time: %llu, non-IO Time: %llu, IO Time: %llu\n",
+           endTime - start, endTime - start - totalWriteTime, totalWriteTime);
+  }
   MPI_Finalize();
+  return EXIT_SUCCESS;
 }
