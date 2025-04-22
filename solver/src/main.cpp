@@ -22,7 +22,7 @@ f3 vecToF3(const Vec3f& v) {
   out.data[2] = v.z();
   return out;
 }
-double* computeFormFactors(int i, ArgParser& args, int rank) {
+double* computeFormFactors(int i, ArgParser& args, uint64_t* memoryTime, uint64_t* cudaTime, uint64_t* shadowTime, int rank) {
   Mesh* m = args.mesh;
   FP**  lines = (FP**)calloc(m->numFaces(), sizeof(FP*));
 
@@ -40,11 +40,12 @@ double* computeFormFactors(int i, ArgParser& args, int rank) {
       lines[j][k] = FP(a, anorm, b, bnorm);
     }
   }
-  double* output = getFormFactor(lines, m->numFaces(), sample_points, rank);
+  double* output = getFormFactor(lines, memoryTime, cudaTime, m->numFaces(), sample_points, rank);
   for (int j = 0; j < m->numFaces(); j++) {
     output[j] /= f->getArea();
     free(lines[j]);
   }
+  uint64_t shadowStart = clock_now();
   for (int j = 0; j < m->numFaces(); j++) {
     Face*  f2 = m->getFace(j);
     double totalVisible = 0.0;
@@ -65,6 +66,8 @@ double* computeFormFactors(int i, ArgParser& args, int rank) {
     totalVisible /= shadow_samples;
     output[j] *= totalVisible;
   }
+  uint64_t shadowEnd = clock_now();
+  *shadowTime += (shadowEnd-shadowStart);
 
   double flux = 0;
   for (int j = 0; j < m->numFaces(); j++) {
@@ -93,6 +96,9 @@ int main(int argc, const char* argv[]) {
   }
 
   uint64_t start = clock_now();
+  uint64_t memoryTime = 0;
+  uint64_t cudaTime = 0;
+  uint64_t shadowTime = 0;
 
   //creating output file
   MPI_File_open(MPI_COMM_WORLD, "formfactors.out",
@@ -106,7 +112,7 @@ int main(int argc, const char* argv[]) {
 
   for (int i = 0; i < m->numFaces(); i++) {
     if (i % worldSize == worldRank) {
-      double* out = computeFormFactors(i, args, worldRank);
+      double* out = computeFormFactors(i, args, &memoryTime, &cudaTime, &shadowTime, worldRank);
       for (int j = 0; j < m->numFaces(); j++) {
         int offset = sizeof(int) + ((i * m->numFaces() + j) * sizeof(double));
         uint64_t write = clock_now();
@@ -125,6 +131,8 @@ int main(int argc, const char* argv[]) {
   if (worldRank == 0) {
     printf("total time: %llu, non-IO Time: %llu, IO Time: %llu\n",
            endTime - start, endTime - start - totalWriteTime, totalWriteTime);
+    printf("cuda memory time: %llu, cuda compute time: %llu\n", memoryTime, cudaTime);
+    printf("shadow time: %llu\n", shadowTime);
   }
   MPI_Finalize();
   return EXIT_SUCCESS;

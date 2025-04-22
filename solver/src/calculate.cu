@@ -2,6 +2,18 @@
 #include <stdio.h>
 #include <cuda.h>
 #include "fp.h"
+#include <stdint.h>
+
+uint64_t clock_now_cuda(void) {
+  unsigned int tbl, tbu0, tbu1;
+
+  do {
+    __asm__ __volatile__("mftbu %0" : "=r"(tbu0));
+    __asm__ __volatile__("mftb %0" : "=r"(tbl));
+    __asm__ __volatile__("mftbu %0" : "=r"(tbu1));
+  } while (tbu0 != tbu1);
+  return (((uint64_t)tbu0) << 32) | tbl;
+}
 
 f3 inline __device__ sub(f3 a, f3 b) {
   f3 out;
@@ -47,12 +59,13 @@ void __global__ calculate(FP** lines, double* out) {
   }
 }
 
-double* getFormFactor(FP** lines, int count, int samples, int rank) {
+double* getFormFactor(FP** lines, uint64_t* memoryTime, uint64_t* cudaTime, int count, int samples, int rank) {
   int c;
   cudaGetDeviceCount(&c);
   cudaSetDevice(rank % c);
   double* cudaOut;
   FP** cudaLines;
+  uint64_t memoryStart = clock_now_cuda();
   cudaMallocManaged(&cudaLines, count*sizeof(FP*));
   for(int i = 0; i < count; i++) {
     cudaMallocManaged(cudaLines+i,samples*sizeof(FP));
@@ -61,8 +74,14 @@ double* getFormFactor(FP** lines, int count, int samples, int rank) {
     }
   }
   cudaMallocManaged(&cudaOut, count*sizeof(double));
+  uint64_t memoryEnd = clock_now_cuda();
+  *memoryTime += (memoryEnd-memoryStart);
+  uint64_t computeStart = clock_now_cuda();
   calculate<<<count, samples, samples*sizeof(double)>>>(cudaLines, cudaOut);
   cudaDeviceSynchronize();
+  uint64_t computeEnd = clock_now_cuda();
+  *cudaTime += (computeEnd-computeStart);
+  memoryStart = clock_now_cuda();
   double* out = (double*)calloc(count, sizeof(double));
   for(int i = 0; i < count; i++) {
     out[i] = cudaOut[i];
@@ -70,6 +89,8 @@ double* getFormFactor(FP** lines, int count, int samples, int rank) {
   }
   cudaFree(cudaLines);
   cudaFree(cudaOut);
+  memoryEnd = clock_now_cuda();
+  *memoryTime += (memoryEnd-memoryStart);
 
   (void)count;
   (void)samples;
