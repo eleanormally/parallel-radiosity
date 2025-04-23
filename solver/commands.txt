@@ -1,0 +1,14 @@
+The following commands were used to generate our tests
+
+Weak Scaling Commands:
+mpirun -n 1 ./radiosity --input ../inputs/cornell_box_diffuse_sphere.obj --subdiv 0
+mpirun -n 4 ./radiosity --input ../inputs/cornell_box_diffuse_sphere.obj --subdiv 1
+mpirun -n 16 ./radiosity --input ../inputs/cornell_box_diffuse_sphere.obj --subdiv 2
+
+
+Strong Scaling Commands:
+mpirun -n 1 ./radiosity --input ../inputs/cornell_box_diffuse_sphere.obj --subdiv 3
+mpirun -n 2 ./radiosity --input ../inputs/cornell_box_diffuse_sphere.obj --subdiv 3
+mpirun -n 4 ./radiosity --input ../inputs/cornell_box_diffuse_sphere.obj --subdiv 3
+mpirun -n 8 ./radiosity --input ../inputs/cornell_box_diffuse_sphere.obj --subdiv 3
+mpirun -n 16 ./radiosity --input ../inputs/cornell_box_diffuse_sphere.obj --subdiv 3
